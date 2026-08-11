@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use OpenCommand data or methods, please cite it as below."
+title: "OpenCommand: open catcher-target and pitcher-command data for MLB"
+authors:
+  - given-names: Tom
+    family-names: Kim
+version: 1.0.0
+date-released: 2026-07-16
+type: dataset
+url: "https://open-command.com"
+repository-code: "https://github.com/tomdoyo/open-command"
+license: CC-BY-NC-SA-4.0
+keywords:
+  - baseball
+  - pitching command
+  - catcher targets
+  - computer vision
+  - Statcast

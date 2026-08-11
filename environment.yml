@@ -1,0 +1,9 @@
+name: opencommand
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13.14
+  - jax=0.7.1
+  - numpy=2.2.1
+  - pandas=2.2.3
+  - scipy=1.17.1

@@ -1,0 +1,9 @@
+__pycache__/
+
+# The release data is too large for git for now; the folder ships empty.
+data/*
+!data/.gitkeep
+
+# The validation reports ship with the data, not before it. Drop this rule when
+# data/ goes public.
+artifacts/validations_*.txt

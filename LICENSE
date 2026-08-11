@@ -1,0 +1,38 @@
+OpenCommand
+https://open-command.com
+
+Copyright (c) 2026 Tom Kim
+
+This work (the data and the source code in this repository) is licensed under
+the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+License (CC BY-NC-SA 4.0).
+
+You are free to:
+
+  Share — copy and redistribute the material in any medium or format
+  Adapt — remix, transform, and build upon the material
+
+Under the following terms:
+
+  Attribution — You must give appropriate credit (cite OpenCommand; see
+  CITATION.cff), provide a link to the license, and indicate if changes were
+  made. You may do so in any reasonable manner, but not in any way that
+  suggests the licensor endorses you or your use.
+
+  NonCommercial — You may not use the material for commercial purposes.
+
+  ShareAlike — If you remix, transform, or build upon the material, you must
+  distribute your contributions under the same license as the original.
+
+No additional restrictions — You may not apply legal terms or technological
+measures that legally restrict others from doing anything the license permits.
+
+Full license text: https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
+For commercial licensing, contact the maintainer at tomdoyo@open-command.com.
+
+---
+
+Data derived from MLB broadcast video and Statcast public feeds. MLB and
+Statcast are trademarks of MLB Advanced Media, L.P.; this project is not
+affiliated with MLB.

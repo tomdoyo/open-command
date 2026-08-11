@@ -1,0 +1,9 @@
+# Every text file is LF in the repo and LF on checkout, on every platform.
+# The private tree this is released from checks out CRLF, so without this a release
+# copy carries CRLF in and rewrites every line of every file it touches.
+* text=auto eol=lf
+
+# Release data and media are binary; normalization must never touch them.
+*.csv.gz binary
+*.png    binary
+*.gif    binary
