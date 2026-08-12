@@ -60,6 +60,7 @@ def clean_teleports(xz, fps):
     finds the real glove; ties go to the earliest seed, which keeps the output byte-stable.
     The real glove is the majority of any clip this detector poses, so it wins from any
     seed inside it."""
+    xz = xz.sort_values("frame_idx", kind="stable")
     if len(xz) < 2:
         return xz
     fr, x, z = (xz[c].tolist() for c in ("frame_idx", "x_in", "z_in"))
