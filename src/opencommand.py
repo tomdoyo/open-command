@@ -24,6 +24,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from ocl import common_parse_args
+
 SRC = Path(__file__).resolve().parent
 DATA = SRC.parent / "data"
 ART = SRC.parent / "artifacts"
@@ -176,7 +178,10 @@ def validity(targets, pbp, fg):
 
 
 if __name__ == "__main__":
-    year = sys.argv[1] if len(sys.argv) > 1 else "2026"
+
+    args = common_parse_args("opencommand")
+    year = str(args.year)
+
     base = DATA / year
     adjusted = base / "exports" / "targets.csv.gz"
     assert not adjusted.exists(), f"score the adjusted tree instead: opencommand.py {year}/exports"

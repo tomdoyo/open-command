@@ -20,6 +20,8 @@ os.environ.setdefault("OMP_NUM_THREADS", "1")
 import numpy as np
 import pandas as pd
 
+from ocl import common_parse_args
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import poselib
 
@@ -113,7 +115,10 @@ def locate_game(args):
 
 
 if __name__ == "__main__":
-    year = sys.argv[1] if len(sys.argv) > 1 else "2026"
+
+    args = common_parse_args("solve_glove_locations")
+    year = str(args.year)
+
     base = poselib.DATA / year
     poses = pd.read_csv(base / "camera_poses.csv.gz").set_index("video")
     games = [int(g) for g in sys.argv[2:]] or sorted(poses["game_pk"].unique())

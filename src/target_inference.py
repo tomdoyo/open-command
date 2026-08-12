@@ -21,6 +21,8 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
+from ocl import common_parse_args
+
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 
 import numpy as np
@@ -107,7 +109,10 @@ def targets_for_game(job):
 
 
 if __name__ == "__main__":
-    year = sys.argv[1] if len(sys.argv) > 1 else "2026"
+
+    args = common_parse_args("target_inference")
+    year = str(args.year)
+
     base = DATA / year
     pbp = pd.read_csv(base / "pbp_info.csv.gz")
     video_key = pbp["game_pk"].astype(str) + "_" + pbp["play_id"] + ".mp4"

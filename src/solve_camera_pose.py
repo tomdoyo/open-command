@@ -41,6 +41,8 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 
+from ocl import common_parse_args
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import poselib
 
@@ -310,7 +312,10 @@ def solve_game(args):
 
 
 if __name__ == "__main__":
-    year = sys.argv[1] if len(sys.argv) > 1 else "2026"
+
+    args = common_parse_args("solve_camera_pose")
+    year = str(args.year)
+
     base = poselib.DATA / year
     pbp, zones = poselib.load_season(year)
     games = [int(g) for g in sys.argv[2:]] or sorted(pbp["game_pk"].unique())
