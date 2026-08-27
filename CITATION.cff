@@ -4,8 +4,8 @@ title: "OpenCommand: open catcher-target and pitcher-command data for MLB"
 authors:
   - given-names: Tom
     family-names: Kim
-version: 1.0.0
-date-released: 2026-07-16
+version: 1.2.0
+date-released: 2026-08-27
 type: dataset
 url: "https://open-command.com"
 repository-code: "https://github.com/tomdoyo/open-command"

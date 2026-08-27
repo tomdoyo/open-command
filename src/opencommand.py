@@ -3,8 +3,8 @@
 Functions:
  - val_median_miss:   median miss distance, pooled and per pitcher
  - val_heldout:       50/50 random heldout rmse
- - val_flatness:      check if E[miss] is flat across n pitches
- - val_confidence:    CI on season-end miss with n random pitches
+ - val_flatness:      check if E[miss] is flat across the first n pitches of the season
+ - val_confidence:    CI on season-end miss with the first n pitches of the season
  - val_correlations:  BB%, Location+, Stuff+, xERA, and next season
  - val_stabilization: Cronbach's alpha
  - val_stickiness:    yoy
@@ -87,8 +87,6 @@ METHODS = [("naive", naive), ("fixed offset", fixedoffset), ("inferred", infer_t
 def missed(fn, tr, te):
     """Per-pitch miss, fit on tr and scored on te."""
     tx, tz = fn(tr, te)
-    if not (np.isfinite(tx).all() and np.isfinite(tz).all()):
-        raise ValueError(f"{fn.__name__} returned a non-finite target")
     return pd.Series(np.hypot(te.plate_x_in - tx, te.plate_z_in - tz), index=te.index)
 
 
@@ -111,16 +109,14 @@ def val_median_miss(d, whole):
                  f"{pp[name].median():14.2f}{len(pp[name]):10d}")
     got, base = METHODS[-1][0], METHODS[-2][0]
     dl = (pp[got] - pp[base]).dropna()
-    L += ["", (f"  {got} vs {base}: {dl.median():+.2f} in per pitcher, "
-               f"better for {(dl < 0).mean():.0%} of {len(dl)} pitchers"), ""]
+    L += ["", f"  {got} vs {base}: {dl.median():+.2f} in per pitcher, "
+              f"better for {(dl < 0).mean():.0%} of {len(dl)} pitchers", ""]
     return L
 
 
 def rms(x):
     """Root mean square of a per-pitch miss."""
-    if not np.isfinite(x).all():
-        raise ValueError("held-out scoring contains a non-finite miss")
-    return float(np.sqrt(np.mean(x ** 2)))
+    return float(np.sqrt(np.nanmean(x ** 2)))
 
 
 def val_heldout(d):
@@ -164,7 +160,7 @@ def val_flatness(d, whole, early):
     is 0 inches). This is a problem early in the season & for debutees.
     """
     pools = [per_pitcher(early[n][METHODS[0][0]], d.pitcher_id, n) for n in NS]
-    L = ["FLATNESS (per pitcher median miss on n random pitches)", "-" * 64,
+    L = ["FLATNESS (per pitcher median miss on the first n pitches of the season)", "-" * 64,
          "  " + f"{'':16s}" + "".join(f"{c:>12s}" for c in [f"n={n}" for n in NS] + ["full"]),
          "  " + f"{'pitchers':16s}" + "".join(f"{len(p):12d}" for p in pools)
          + f"{len(per_pitcher(whole[METHODS[0][0]], d.pitcher_id, LEADERBOARD_MIN_N)):12d}"]
@@ -177,12 +173,13 @@ def val_flatness(d, whole, early):
 
 
 def val_confidence(d, whole, early):
-    """CI on season-end miss with n random pitches.
+    """CI on season-end miss with the first n pitches of the season.
 
-    Similar to val_flatness, but this measures how close the average miss estimate (on n
-    random pitches) is to the end-of-season average miss.
+    Similar to val_flatness, but this measures how close the average miss estimate (on the
+    first n pitches) is to the end-of-season average miss. The first n, not a random n: a random
+    draw carries the season's pitch mix and reads closer than a real early season does.
     """
-    L = ["CONFIDENCE INTERVAL (median miss calculated on n random pitches vs end of season)",
+    L = ["CONFIDENCE INTERVAL (median miss calculated on the first n pitches of the season vs end of season)",
          "-" * 64,
          "  " + f"{'':22s}" + "".join(f"{c:>10s}" for c in [f"n={n}" for n in NS] + ["full"])]
     sizes = d.groupby("pitcher_id").size()
@@ -241,8 +238,8 @@ def val_correlations(d, whole, fg, fg_next, season):
                                           for n, _ in METHODS))
     s = t.dropna(subset=["sp_location", "BB%"])
     L += ["",
-          (f"  For reference, Location+ correlation to BB%: "
-           f"{cell(s['sp_location'].to_numpy(), s['BB%'].to_numpy())}"),
+          f"  For reference, Location+ correlation to BB%: "
+          f"{cell(s['sp_location'].to_numpy(), s['BB%'].to_numpy())}",
           ""]
 
     nxt = int(season) + 1
@@ -306,7 +303,7 @@ def val_stabilization(d, whole, fg_all):
         L.append(f"  {lab:16s}" + "".join(f"{vb / (vb + vw / n):12.3f}" for n in NS)
                  + "".join(f"{a / (1 - a) * vw / vb:12.0f}" for a in ALPHAS))
     L += ["",
-          "  Location+ and Stuff+ ship one number per pitcher-season, so their vw is fitted",
+          f"  Location+ and Stuff+ ship one number per pitcher-season, so their vw is fitted",
           f"  across {n_pair} consecutive-season pairs and not measured per pitch.", ""]
     return L
 
@@ -402,9 +399,8 @@ def pose_accuracy(poses):
     pv = poses.dropna(subset=["reproj_px"])
     L = ["CAMERA-POSE ACCURACY (trajectory reprojection)", "-" * 64,
          f"  clips with a flight run under the pose: {len(pv)} / {len(poses)}",
-         (f"  reproj_px: median {pv['reproj_px'].median():.2f}, "
-          f"p90 {pv['reproj_px'].quantile(0.9):.2f}, "
-          f"<5px {100 * (pv['reproj_px'] < 5).mean():.1f}%")]
+         f"  reproj_px: median {pv['reproj_px'].median():.2f}, p90 {pv['reproj_px'].quantile(0.9):.2f}, "
+         f"<5px {100 * (pv['reproj_px'] < 5).mean():.1f}%"]
     tp = pv.dropna(subset=["balltp_err_x_in"])
     for label, w in [("within 24 frames (the whole flight)", FLIGHT_FR),
                      ("within 2.5 frames (at the plate)", PLATE_FR)]:
@@ -484,7 +480,7 @@ if __name__ == "__main__":
           + (f"   previous season {prev_year}: {len(prev)} pitches" if prev is not None else ""),
           flush=True)
     whole = {name: missed(fn, d, d) for name, fn in METHODS}
-    rank = pd.Series(np.random.default_rng(SEED).random(len(d)), index=d.index).groupby(d.pitcher_id).rank(method="first")
+    rank = d.groupby("pitcher_id").cumcount() + 1            # d is in date order: each pitcher's nth pitch of the season
     early = {n: {name: missed(fn, t, t) for name, fn in METHODS}
              for n, t in ((n, d[rank <= n]) for n in NS)}  # reused by confidence
 

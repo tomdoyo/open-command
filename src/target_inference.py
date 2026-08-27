@@ -54,7 +54,7 @@ LATENESS_IN_PER_S = 15.0    # penalty factor peak being far from release
 
 CELL = ["pitcher_id", "pitch_type"]
 AXES = {"x": ("naive_x_in", "kx", "plate_x_in"), "z": ("naive_z_in", "kz", "plate_z_in")}
-WLO, WHI = 0.0, 1.5
+WX, WZ, WCROSS = (0.0, 1.3), (-0.2, 1.1), (-1.5, 1.5)   # own-x, own-z and cross-term weight bounds
 
 
 def select_target(g):
@@ -100,27 +100,20 @@ def predict_random_effect(est, se2, parent):
 
     DerSimonian-Laird: adjust each point in prior distribution by n to adjust for noise.
     """
-    usable = est.notna() & parent.notna() & se2.notna() & np.isfinite(se2) & (se2 >= 0)
-    if usable.sum() < 2:
-        return parent.copy(), 0.0
-    e, v, p = est[usable], se2[usable].clip(lower=np.finfo(float).eps), parent[usable]
-    prec = 1 / v
+    if len(est) < 2: return parent.copy(), 0.0
+    prec = 1 / se2
     S1, S2 = float(prec.sum()), float((prec ** 2).sum())
-    Q = float((prec * (e - p) ** 2).sum())
+    Q = float((prec * (est - parent) ** 2).sum())
     den = S1 - S2 / S1 if S1 > 0 else 0.0     # zero on a slice too thin to hold a spread at all,
     if den <= 0: return parent.copy(), 0.0    # e.g. one pitch per pitcher in the season's first week
-    tau2 = max((Q - (len(e) - 1)) / den, 0.0)
-    if tau2 <= 0:
-        return parent.copy(), tau2
-    weight = tau2 / (tau2 + se2)
-    posterior = parent + weight * (est - parent)
-    return posterior.where(np.isfinite(posterior), parent), tau2
+    tau2 = max((Q - (len(est) - 1)) / den, 0.0)
+    return ((parent + tau2 * (est - parent) / (tau2 + se2)) if tau2 > 0 else parent.copy()), tau2
 
 
 def solve_glove_coefs(s):
     """Least squares for wx, wz. ball deviation = wx * glove_dx + wz * glove_dz.
 
-    No intercept. Returns wx, wz (correspond to xx, xz OR zx, zz) and their squared
+    No intercept. Returns wx, wz (correspond to xx, xz OR zx, zz) and their squared 
     standard error.
     """
     flat = s.xx * s.zz - s.xz ** 2                        # zero or below: fewer than 2 glove positions
@@ -131,15 +124,10 @@ def solve_glove_coefs(s):
 
 def shrink(est, se2, grp):
     """One level: shrink value towards group mean using standard error."""
-    usable = se2.notna() & np.isfinite(se2) & (se2 >= 0)
-    prec = pd.Series(0.0, index=se2.index)
-    prec.loc[usable] = 1 / se2.loc[usable].clip(lower=np.finfo(float).eps)
-    centre = grp.map((est * prec).groupby(grp).sum() / prec.groupby(grp).sum()).fillna(0.0)
+    centre = grp.map((est / se2).groupby(grp).sum() / (1 / se2).groupby(grp).sum())
     tau2 = grp.map(pd.Series({g: predict_random_effect(est.loc[i], se2.loc[i], centre.loc[i])[1]
                               for g, i in est.groupby(grp).groups.items()}))
-    weight = tau2 / (tau2 + se2)
-    posterior = centre + weight * (est - centre)
-    return posterior.where(np.isfinite(posterior), centre)
+    return centre + tau2 * (est - centre) / (tau2 + se2)
 
 
 def fit_glove_weights(r):
@@ -150,7 +138,7 @@ def fit_glove_weights(r):
         - Pitcher-level: shrink to league distribution of pitcher xx, xz, zx, zz
         - Pitch type-level: pitch type subtracted by shrunk pitcher-level, shrink to pitch type × hand
                             distribution of pitch type avg subtracted by pitcher avg
-    xx, zz clipped to 0..1.5; xz, zx to -1.5..1.5
+    xx clipped to 0..1.3, zz to -0.2..1.1; xz, zx to -1.5..1.5
     """
     gx, gz = (r.naive_x_in - r.kx).to_numpy(), (r.naive_z_in - r.kz).to_numpy()
     hand = r.groupby("pitcher_id").hand.first()
@@ -176,7 +164,7 @@ def fit_glove_weights(r):
         parz = pd.Series(pid.map(wpz).to_numpy(), index=c.index)
         wcx, wcz = parx + shrink(cx - parx, csig * icx, grp), parz + shrink(cz - parz, csig * icz, grp)
         # 3. clip
-        bx, bz = ((WLO, WHI), (-WHI, WHI)) if ax == "x" else ((-WHI, WHI), (WLO, WHI))
+        bx, bz = (WX, WCROSS) if ax == "x" else (WCROSS, WZ)
         out[ax] = pd.DataFrame({"wx": wcx.clip(*bx), "wz": wcz.clip(*bz)})
     return out
 
@@ -189,8 +177,7 @@ def apply_glove_weights(f, W):
     gx, gz = (f.naive_x_in - f.kx).to_numpy(), (f.naive_z_in - f.kz).to_numpy()
     for ax, (nv, kc, pl) in AXES.items():
         cell = f[CELL].merge(W[ax], left_on=CELL, right_index=True, how="left")
-        wx, wz = cell.wx.fillna(0.0).to_numpy(), cell.wz.fillna(0.0).to_numpy()
-        f["t" + ax] = f[kc].to_numpy() + wx * gx + wz * gz
+        f["t" + ax] = f[kc].to_numpy() + cell.wx.to_numpy() * gx + cell.wz.to_numpy() * gz
     return f
 
 
@@ -220,10 +207,8 @@ def fit_and_apply_offsets(a, e):
         grp = pd.Series(c.index.get_level_values(1) + "-" + pid.map(hand), index=c.index)
         par = pd.Series(pid.map(pp).to_numpy(), index=c.index)
         cp = par + shrink(c["mean"] - par, S / c["count"], grp)
-        # 3. look up e, falling back from an unseen cell to its pitcher and then the league
-        j = e[CELL].merge(cp.rename("v"), left_on=CELL, right_index=True, how="left")
-        j = j.merge(pp.rename("vp"), left_on="pitcher_id", right_index=True, how="left")
-        out[col] = j.v.fillna(j.vp).fillna(g0).to_numpy()
+        # 3. look up e
+        out[col] = e[CELL].merge(cp.rename("v"), left_on=CELL, right_index=True, how="left").v.to_numpy()
     return out["rx"], out["rz"]
 
 
@@ -240,10 +225,6 @@ def infer_targets(tr, te):
         columns={"naive_x_in": "kx", "naive_z_in": "kz"})
     a = tr.merge(cen, left_on=CELL, right_index=True, how="left")
     e = te.merge(cen, left_on=CELL, right_index=True, how="left")
-    # An unseen pitch type has no training centre. Its observed glove is the neutral
-    # centre, then the offset hierarchy falls back to the pitcher or league value.
-    e["kx"] = e.kx.fillna(e.naive_x_in)
-    e["kz"] = e.kz.fillna(e.naive_z_in)
     W = fit_glove_weights(a)
     a, e = apply_glove_weights(a, W), apply_glove_weights(e, W)
     a["rx"], a["rz"] = a.plate_x_in - a.tx, a.plate_z_in - a.tz

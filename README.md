@@ -2,7 +2,7 @@
 
 <img src="artifacts/banner.png" alt="OpenCommand" width="100%">
 
-[![Version](https://img.shields.io/badge/version-1.1.0-6E7681?style=for-the-badge&labelColor=24292F)](https://huggingface.co/datasets/tomdoyo/open-command)
+[![Version](https://img.shields.io/badge/version-1.2.0-6E7681?style=for-the-badge&labelColor=24292F)](https://huggingface.co/datasets/tomdoyo/open-command)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-6E7681?style=for-the-badge&labelColor=24292F)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![GitHub](https://img.shields.io/badge/github.com%2Ftomdoyo%2Fopen--command-00852E?style=for-the-badge&labelColor=24292F)](https://github.com/tomdoyo/open-command)
 
@@ -26,10 +26,13 @@ This repo contains 2024/2025/2026 computer vision object detections and the full
 
 ## Updates
 
+#### 2026-08-27: Version 1.2.0
+- Inferred targets are now a **2 level hierarchical model fit by empirical Bayes**: glove dependence (how much the target moves per inch of glove movement, 4 slopes xx, xz, zx, zz) plus an offset, both shrunk pitcher → league and pitch type → pitch type × handedness. The fixed `pitcher × pitch type × season` offset retires.
+
 #### 2026-08-21: Added 2024 season
 
 #### 2026-08-21: Version 1.1.0
-- Targets are now chosen at the *highest glove position in the pre-pitch window<sup>1</sup>, **discounted by how early it is**.*
+- Targets are now chosen at the *highest glove position in the pre-pitch window<sup>1</sup>, [discounted by how early it is**](https://x.com/open_command/status/2090795304086041066?s=20).*
 
 <sub><sup>1</sup> Median of ±0.05s around this used to be targets
 
@@ -114,7 +117,9 @@ raw/gloveball_tracks  raw/strikezone_tracking
 
 #### **3. Inferring target with glove locations**
 - Take the highest `glove_xz` in the [release-2.0s, release-0.3s] window, discounted by how early it is<sup>1</sup>. This is the **naive** target.
-- Many pitchers like to "start the pitch from the glove and let the ball break away from it". To account for this, add `pitcher × pitch type × season` offset. This is the **inferred target**.
+- Some pitchers don't look at the glove, some adjust more than an inch per inch of glove movement. Fit 4 slopes (xx, xz, zx, zz) for how much the target moves per inch the glove moves. This is **glove dependence**.
+- Many pitchers like to "start the pitch from the glove and let the ball break away from it". To account for this, add an **offset**.
+- Both are a 2 level hierarchical model fit by empirical Bayes: each pitcher shrinks to the league, each pitch type shrinks to its pitch type × handedness distribution (a changeup lands about 4 inches below the pitcher's average, a four-seam 4 above), so a pitch type with 10 pitches gets a sane value instead of a 0 inch miss. Glove dependence + offset is the **inferred target**.
   - This assumes every pitcher is **perfectly calibrated** on a pitch type level.
 - Use plausibility filter<sup>2</sup> to filter out extreme targets.
 
@@ -195,44 +200,45 @@ A nice feature of this is that you can tell where the pitcher was *trying* to th
 
 | Pitch type | Pitchers | Min | p10 | p25 | Median | p75 | p90 | Max |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| All pitches | 716 | 8.78 | 10.04 | 10.54 | 11.21 | 11.95 | 12.72 | 15.83 |
-| Four-seam (FF) | 581 | 7.90 | 8.90 | 9.71 | 10.56 | 11.61 | 12.58 | 15.27 |
-| Sinker (SI) | 380 | 6.50 | 8.61 | 9.36 | 10.05 | 11.25 | 12.21 | 16.93 |
-| Cutter (FC) | 215 | 7.11 | 8.65 | 9.39 | 10.17 | 11.13 | 12.14 | 15.67 |
-| Slider (SL) | 393 | 7.96 | 9.58 | 10.48 | 11.43 | 12.77 | 14.13 | 19.55 |
-| Sweeper (ST) | 228 | 8.67 | 9.99 | 10.72 | 11.65 | 12.86 | 14.56 | 17.90 |
-| Curveball (CU+KC) | 248 | 8.78 | 10.76 | 11.59 | 12.84 | 14.34 | 15.73 | 20.30 |
-| Changeup (CH) | 301 | 8.39 | 10.18 | 11.13 | 12.16 | 13.79 | 15.48 | 27.03 |
-| Splitter (FS) | 95 | 8.49 | 10.45 | 11.74 | 13.28 | 14.93 | 16.61 | 21.41 |
+| All pitches | 716 | 8.77 | 10.00 | 10.51 | 11.18 | 11.94 | 12.71 | 15.82 |
+| Four-seam (FF) | 581 | 7.84 | 8.85 | 9.68 | 10.54 | 11.56 | 12.58 | 15.24 |
+| Sinker (SI) | 380 | 6.46 | 8.60 | 9.33 | 10.03 | 11.22 | 12.18 | 16.88 |
+| Cutter (FC) | 215 | 7.11 | 8.62 | 9.37 | 10.15 | 11.10 | 12.12 | 15.65 |
+| Slider (SL) | 393 | 7.91 | 9.55 | 10.42 | 11.39 | 12.74 | 14.10 | 19.51 |
+| Sweeper (ST) | 228 | 8.65 | 9.96 | 10.66 | 11.61 | 12.85 | 14.52 | 17.81 |
+| Curveball (CU+KC) | 248 | 8.74 | 10.75 | 11.56 | 12.82 | 14.32 | 15.70 | 20.26 |
+| Changeup (CH) | 301 | 8.34 | 10.15 | 11.10 | 12.13 | 13.78 | 15.47 | 27.00 |
+| Splitter (FS) | 95 | 8.43 | 10.43 | 11.70 | 13.23 | 14.91 | 16.61 | 21.45 |
 
-**2025, inferred median miss** — naive + pitcher × pitch-type offset
+**2025, inferred median miss** — glove dependence + offset
 
 | Pitch type | Pitchers | Min | p10 | p25 | Median | p75 | p90 | Max |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| All pitches | 716 | 7.47 | 9.09 | 9.60 | 10.17 | 10.77 | 11.28 | 14.72 |
-| Four-seam (FF) | 581 | 7.13 | 8.45 | 9.02 | 9.66 | 10.37 | 11.09 | 13.43 |
-| Sinker (SI) | 380 | 6.27 | 8.18 | 8.72 | 9.39 | 10.16 | 10.87 | 14.22 |
-| Cutter (FC) | 215 | 7.08 | 8.27 | 8.85 | 9.55 | 10.35 | 11.03 | 12.87 |
-| Slider (SL) | 393 | 7.61 | 9.00 | 9.64 | 10.52 | 11.35 | 12.22 | 14.33 |
-| Sweeper (ST) | 228 | 8.26 | 9.44 | 10.03 | 10.68 | 11.56 | 12.53 | 16.07 |
-| Curveball (CU+KC) | 248 | 8.51 | 9.81 | 10.73 | 11.42 | 12.50 | 13.48 | 18.82 |
-| Changeup (CH) | 301 | 7.67 | 8.99 | 9.81 | 10.53 | 11.32 | 12.18 | 15.66 |
-| Splitter (FS) | 95 | 8.08 | 9.56 | 10.18 | 11.14 | 12.03 | 13.28 | 16.93 |
+| All pitches | 716 | 7.59 | 8.87 | 9.38 | 9.91 | 10.46 | 10.95 | 14.87 |
+| Four-seam (FF) | 581 | 7.11 | 8.28 | 8.88 | 9.50 | 10.14 | 10.80 | 13.25 |
+| Sinker (SI) | 380 | 6.77 | 7.97 | 8.54 | 9.18 | 9.86 | 10.55 | 12.37 |
+| Cutter (FC) | 215 | 7.02 | 8.15 | 8.74 | 9.36 | 10.00 | 10.62 | 12.80 |
+| Slider (SL) | 393 | 7.36 | 8.70 | 9.39 | 10.24 | 10.93 | 11.82 | 14.46 |
+| Sweeper (ST) | 228 | 7.73 | 9.26 | 9.82 | 10.39 | 11.23 | 12.12 | 14.69 |
+| Curveball (CU+KC) | 248 | 8.22 | 9.68 | 10.40 | 11.05 | 12.06 | 13.21 | 16.77 |
+| Changeup (CH) | 301 | 7.52 | 8.82 | 9.50 | 10.28 | 10.95 | 11.74 | 15.04 |
+| Splitter (FS) | 95 | 7.48 | 9.19 | 9.66 | 10.74 | 11.83 | 12.66 | 14.75 |
 
 ### Some correlations
 
-**2025** — 339 pitchers, min. 50 innings
+**2025** — 478 pitchers, min. 500 pitches
 
 | | Naive | Inferred |
 |---|---:|---:|
-| BB% | +0.456 [+0.366, +0.541] | +0.547 [+0.465, +0.626] |
-| Stuff+ | +0.198 [+0.096, +0.297] | +0.251 [+0.147, +0.345] |
-| xERA | -0.071 [-0.180, +0.034] | -0.069 [-0.175, +0.039] |
-| xERA \| Stuff+ | +0.085 [-0.022, +0.190] | +0.137 [+0.029, +0.243] |
+| BB% | +0.464 [+0.396, +0.533] | +0.564 [+0.495, +0.623] |
+| Location+ | -0.406 [-0.482, -0.335] | -0.606 [-0.657, -0.546] |
+| Stuff+ | +0.161 [+0.068, +0.254] | +0.198 [+0.098, +0.292] |
+| xERA | -0.071 [-0.160, +0.016] | -0.064 [-0.149, +0.022] |
+| xERA \| Stuff+ | +0.027 [-0.064, +0.120] | +0.064 [-0.029, +0.155] |
 
 In particular, we can see a strong correlation between command and walk rates.
 <p align="center">
-  <img src="artifacts/bb_vs_command_2025.png" alt="2025 inferred median miss against walk rate, 339 pitchers" width="380">
+  <img src="artifacts/bb_vs_command_2025.png" alt="2025 inferred median miss against walk rate, 478 pitchers" width="380">
 </p>
 
 #### **Why (~~mean~~) median miss?** 
