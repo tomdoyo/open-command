@@ -191,7 +191,7 @@ OpenCommand tracks nearly all the pitches that it *can*, with most clips lost be
 A nice feature of this is that you can tell where the pitcher was *trying* to throw, which is really hard just looking at the final location.
 
 <p align="center">
-  <img src="artifacts/degrom_target_map_2025_example.png" alt="Jacob deGrom inferred targets and actual four-seam locations, 2025" width="720">
+  <img src="artifacts/degrom_target_map_2025.png" alt="Jacob deGrom inferred targets and actual four-seam locations, 2025" width="720">
 </p>
 
 ### Command distribution
@@ -238,7 +238,7 @@ A nice feature of this is that you can tell where the pitcher was *trying* to th
 
 In particular, we can see a strong correlation between command and walk rates.
 <p align="center">
-  <img src="artifacts/bb_vs_command_2025.png" alt="2025 inferred median miss against walk rate, 478 pitchers" width="380">
+  <img src="artifacts/bb_command_2025.png" alt="2025 inferred median miss against walk rate, 478 pitchers" width="380">
 </p>
 
 #### **Why (~~mean~~) median miss?** 
