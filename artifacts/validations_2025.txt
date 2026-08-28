@@ -18,33 +18,33 @@ HELD-OUT ACCURACY (rmse, random 50/50 train/test split)
   fixed offset         13.16   13.64 (+0.31)     12.93   13.06 (+0.12)
   inferred             12.89   13.20 (+0.27)     12.49   12.63 (+0.13)
 
-FLATNESS (per pitcher median miss on the first n pitches of the season)
+FLATNESS (per pitcher median miss on n random pitches)
 ----------------------------------------------------------------
                           n=10        n=30       n=100       n=300      n=1000        full
   pitchers                 849         802         716         551         232         716
-  naive                  11.10       11.27       11.20       10.98       10.82       11.18
-  fixed offset            7.73        9.31        9.82        9.94        9.79       10.14
-  inferred                9.47        9.66        9.70        9.71        9.57        9.91
+  naive                  11.59       11.30       11.22       11.12       10.79       11.18
+  fixed offset            8.08        9.54        9.99       10.07        9.82       10.14
+  inferred                9.74        9.94        9.92        9.85        9.60        9.91
 
-CONFIDENCE INTERVAL (median miss calculated on the first n pitches of the season vs end of season)
+CONFIDENCE INTERVAL (median miss calculated on n random pitches vs end of season)
 ----------------------------------------------------------------
                               n=10      n=30     n=100     n=300    n=1000      full
   naive, pitchers              849       802       716       551       232       870
-    avg deviation             2.02      1.22      0.62      0.34      0.15      0.00
-    90%                       4.82      3.03      1.72      0.94      0.50      0.00
-    bias                     -0.18     -0.13     -0.00     -0.02      0.00      0.00
+    avg deviation             1.96      1.10      0.54      0.26      0.10      0.00
+    90%                       4.70      2.67      1.31      0.75      0.31      0.00
+    bias                      0.09      0.02      0.04      0.01      0.00      0.00
 
   fixed offset, pitchers       849       802       716       551       232       870
-    avg deviation             2.64      1.23      0.59      0.33      0.12      0.00
-    90%                       5.22      2.80      1.47      0.79      0.44      0.00
-    bias                     -2.45     -0.90     -0.31     -0.14     -0.03      0.00
+    avg deviation             2.32      1.03      0.47      0.26      0.10      0.00
+    90%                       5.09      2.61      1.26      0.73      0.29      0.00
+    bias                     -2.02     -0.60     -0.14     -0.00      0.01      0.00
 
   inferred, pitchers           849       802       716       551       232       870
-    avg deviation             1.73      1.00      0.53      0.29      0.12      0.00
-    90%                       4.07      2.36      1.24      0.69      0.35      0.00
-    bias                     -0.47     -0.24     -0.18     -0.07     -0.01      0.00
+    avg deviation             1.63      0.87      0.49      0.24      0.08      0.00
+    90%                       3.94      2.30      1.22      0.65      0.26      0.00
+    bias                     -0.25     -0.01      0.05      0.01      0.01      0.00
 
-CORRELATIONS (Pearson, whole season)
+CORRELATIONS (Pearson, whole season, unweighted)
 ----------------------------------------------------------------
   Min. 500 pitches, N = 478
 
@@ -57,7 +57,7 @@ CORRELATIONS (Pearson, whole season)
 
   For reference, Location+ correlation to BB%: -0.635 [-0.696, -0.564]
 
-  PREDICTIVENESS
+  predictiveness
   --------------------------------------------------------------
   Min. 500 pitches, N = 297
 
@@ -81,13 +81,21 @@ STABILIZATION (cronbach's alpha, using mean miss)
   Location+ and Stuff+ ship one number per pitcher-season, so their vw is fitted
   across 2899 consecutive-season pairs and not measured per pitch.
 
-STICKINESS
+STICKINESS (unweighted)
 ----------------------------------------------------------------
   year-over-year
 
-                           naive  fixed offset      inferred     Location+        Stuff+           BB%            K%           HR%      pitchers
-  500+ pitches            +0.670        +0.756        +0.849        +0.516        +0.752        +0.516        +0.684        +0.256           298
-  100+ pitches            +0.556        +0.633        +0.737        +0.405        +0.732        +0.283        +0.527        +0.175           506
+                     50+ pitches  200+ pitches 1000+ pitches
+  naive                   +0.570        +0.628        +0.751
+  fixed offset            +0.606        +0.675        +0.785
+  inferred                +0.720        +0.790        +0.856
+  FF/SI mph               +0.926        +0.933        +0.922
+  Location+               +0.349        +0.463        +0.600
+  Stuff+                  +0.754        +0.743        +0.742
+  BB%                     +0.253        +0.426        +0.631
+  K%                      +0.456        +0.593        +0.739
+  HR%                     +0.196        +0.183        +0.438
+  pitchers                   561           422           129
 
 PIPELINE FUNNEL
 ----------------------------------------------------------------

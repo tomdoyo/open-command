@@ -44,7 +44,7 @@ CONFIDENCE INTERVAL (median miss calculated on the first n pitches of the season
     90%                       3.96      2.33      1.21      0.73      0.32      0.00
     bias                     -0.12     -0.03     -0.12     -0.04     -0.03      0.00
 
-CORRELATIONS (Pearson, whole season)
+CORRELATIONS (Pearson, whole season, unweighted)
 ----------------------------------------------------------------
   Min. 500 pitches, N = 473
 
@@ -57,7 +57,7 @@ CORRELATIONS (Pearson, whole season)
 
   For reference, Location+ correlation to BB%: -0.657 [-0.716, -0.582]
 
-  PREDICTIVENESS
+  predictiveness
   --------------------------------------------------------------
   Min. 500 pitches, N = 311
 
@@ -81,7 +81,7 @@ STABILIZATION (cronbach's alpha, using mean miss)
   Location+ and Stuff+ ship one number per pitcher-season, so their vw is fitted
   across 2311 consecutive-season pairs and not measured per pitch.
 
-STICKINESS
+STICKINESS (unweighted)
 ----------------------------------------------------------------
   skipped: no 2023 tree on disk
 

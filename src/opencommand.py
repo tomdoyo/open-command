@@ -46,6 +46,7 @@ PLATE_FR = 2.5
 FLIGHT_FR = 24  # a flight is ~0.4 s = 24 frames at 60 fps
 
 NS = [10, 30, 100, 300, 1000]
+STICKY_NS = [50, 200, 1000]
 COLS = NS + [None]
 HALF_NS = [10, 500]
 ALPHAS = [0.5, 0.7]
@@ -227,7 +228,7 @@ def val_correlations(d, whole, fg, fg_next, season):
     t = t[t.Pitches >= MIN_N_SEASON]        # pitches THROWN, so the pool does not move with coverage
     assert len(t) > 100, f"the Fangraphs join found only {len(t)} pitchers"
 
-    L = ["CORRELATIONS (Pearson, whole season)", "-" * 64,
+    L = ["CORRELATIONS (Pearson, whole season, unweighted)", "-" * 64,
          f"  Min. {MIN_N_SEASON} pitches, N = {len(t)}", "",
          f"  {'':22s}" + "".join(f"{n:>26s}" for n, _ in METHODS)]
     for lab, col, ctrl in VALIDITY_ROWS:
@@ -242,7 +243,7 @@ def val_correlations(d, whole, fg, fg_next, season):
           ""]
 
     nxt = int(season) + 1
-    L += ["  PREDICTIVENESS", "  " + "-" * 62]
+    L += ["  predictiveness", "  " + "-" * 62]
     if fg_next is None:
         return L + [f"  skipped: no {nxt} Fangraphs file on disk", ""]
     p = t.join(fg_next.set_index("xMLBAMID")[cols], how="inner", rsuffix="_next")
@@ -309,31 +310,35 @@ def val_stabilization(d, whole, fg_all):
 
 def val_stickiness(d, whole, prev, prev_year, fg, fg_prev):
     """Year-over-year correlations."""
-    L = ["STICKINESS", "-" * 64]
+    L = ["STICKINESS (unweighted)", "-" * 64]
     if prev is None:
         return L + [f"  skipped: no {prev_year} tree on disk", ""]
     prev_miss = {name: missed(fn, prev, prev) for name, fn in METHODS}   # one fit, both rows
-    labels = [n for n, _ in METHODS] + ([lab for lab, _ in STICKY] if fg_prev is not None else [])
-    L += ["  year-over-year", "",
-          f"  {'':16s}" + "".join(f"{n:>14s}" for n in labels) + f"{'pitchers':>14s}"]
-    for floor in (MIN_N_SEASON, LEADERBOARD_MIN_N):
-        rows, pool = {}, None
+    fb = lambda t: t[t.pitch_type.isin(["FF", "SI"])].groupby("pitcher_id").mph.mean()
+    labels = [n for n, _ in METHODS] + ["FF/SI mph"] + ([lab for lab, _ in STICKY] if fg_prev is not None else [])
+    r, pools, notes = {lab: [] for lab in labels}, [], []
+    for floor in STICKY_NS:
         for name, _ in METHODS:
             j = pd.DataFrame({"prev": per_pitcher(prev_miss[name], prev.pitcher_id, floor),
                               "cur": per_pitcher(whole[name], d.pitcher_id, floor)}).dropna()
-            rows[name], pool = j.prev.corr(j.cur), j.index
+            r[name].append(j.prev.corr(j.cur))
+            pool = j.index
+        j = pd.DataFrame({"prev": fb(prev), "cur": fb(d)}).reindex(pool).dropna()
+        r["FF/SI mph"].append(j.prev.corr(j.cur))
         if fg_prev is not None:     # same pitchers again, scored by Fangraphs
             cols = [c for _, c in STICKY]
             e = (fg_prev.set_index("xMLBAMID")[cols]
                  .join(fg.set_index("xMLBAMID")[cols], lsuffix="_prev").reindex(pool).dropna())
             for lab, col in STICKY:
-                rows[lab] = e[f"{col}_prev"].corr(e[col])
+                r[lab].append(e[f"{col}_prev"].corr(e[col]))
             if len(e) < len(pool):
-                L.append(f"  {floor}+: the Fangraphs columns read {len(e)} of the {len(pool)}; "
-                         f"the rest miss a Fangraphs row in one season.")
-        L.append(f"  {f'{floor}+ pitches':16s}" + "".join(f"{rows[n]:+14.3f}" for n in labels)
-                 + f"{len(pool):14d}")
-    L.append("")
+                notes.append(f"  {floor}+: the Fangraphs columns read {len(e)} of the {len(pool)}; "
+                             f"the rest miss a Fangraphs row in one season.")
+        pools.append(len(pool))
+    L += ["  year-over-year", "",
+          f"  {'':16s}" + "".join(f"{f'{n}+ pitches':>14s}" for n in STICKY_NS)]
+    L += [f"  {lab:16s}" + "".join(f"{v:+14.3f}" for v in r[lab]) for lab in labels]
+    L += [f"  {'pitchers':16s}" + "".join(f"{n:14d}" for n in pools)] + notes + [""]
     return L
 
 
@@ -436,11 +441,12 @@ def distribution(targets, pbp):
 def frame(targets, pbp):
     """Prepare table for each validation."""
     d = targets[targets["plausible"]].merge(
-        pbp[["game_pk", "play_id", "date", "pitcher_id", "pitch_type"]],
+        pbp[["game_pk", "play_id", "date", "pitcher_id", "pitch_type", "vx0", "vy0", "vz0"]],
         on=["game_pk", "play_id"], how="inner")
     d = d.dropna(subset=["pitcher_id", "pitch_type", "plate_x_in", "naive_x_in"])
     d = d.sort_values(["date", "play_id"]).reset_index(drop=True)
     d["pitcher_id"] = d.pitcher_id.astype(int)
+    d["mph"] = np.linalg.norm(d[["vx0", "vy0", "vz0"]], axis=1) * 3600 / 5280   # release speed
     d["hand"] = np.where(d.pitcher_id.map(pbp.groupby("pitcher_id").x0.median()) < 0, "R", "L")  # release side
     assert d.play_id.is_unique
     return d
