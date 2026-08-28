@@ -3,8 +3,8 @@
 Functions:
  - val_median_miss:   median miss distance, pooled and per pitcher
  - val_heldout:       50/50 random heldout rmse
- - val_flatness:      check if E[miss] is flat across the first n pitches of the season
- - val_confidence:    CI on season-end miss with the first n pitches of the season
+ - val_flatness:      check if E[miss] is flat across n random pitches
+ - val_confidence:    CI on season-end miss with n random pitches
  - val_correlations:  BB%, Location+, Stuff+, xERA, and next season
  - val_stabilization: Cronbach's alpha
  - val_stickiness:    yoy
@@ -160,7 +160,7 @@ def val_flatness(d, whole, early):
     is 0 inches). This is a problem early in the season & for debutees.
     """
     pools = [per_pitcher(early[n][METHODS[0][0]], d.pitcher_id, n) for n in NS]
-    L = ["FLATNESS (per pitcher median miss on the first n pitches of the season)", "-" * 64,
+    L = ["FLATNESS (per pitcher median miss on n random pitches)", "-" * 64,
          "  " + f"{'':16s}" + "".join(f"{c:>12s}" for c in [f"n={n}" for n in NS] + ["full"]),
          "  " + f"{'pitchers':16s}" + "".join(f"{len(p):12d}" for p in pools)
          + f"{len(per_pitcher(whole[METHODS[0][0]], d.pitcher_id, LEADERBOARD_MIN_N)):12d}"]
@@ -173,13 +173,12 @@ def val_flatness(d, whole, early):
 
 
 def val_confidence(d, whole, early):
-    """CI on season-end miss with the first n pitches of the season.
+    """CI on season-end miss with n random pitches.
 
-    Similar to val_flatness, but this measures how close the average miss estimate (on the
-    first n pitches) is to the end-of-season average miss. The first n, not a random n: a random
-    draw carries the season's pitch mix and reads closer than a real early season does.
+    Similar to val_flatness, but this measures how close the average miss estimate (on n
+    random pitches) is to the end-of-season average miss.
     """
-    L = ["CONFIDENCE INTERVAL (median miss calculated on the first n pitches of the season vs end of season)",
+    L = ["CONFIDENCE INTERVAL (median miss calculated on n random pitches vs end of season)",
          "-" * 64,
          "  " + f"{'':22s}" + "".join(f"{c:>10s}" for c in [f"n={n}" for n in NS] + ["full"])]
     sizes = d.groupby("pitcher_id").size()
@@ -480,7 +479,7 @@ if __name__ == "__main__":
           + (f"   previous season {prev_year}: {len(prev)} pitches" if prev is not None else ""),
           flush=True)
     whole = {name: missed(fn, d, d) for name, fn in METHODS}
-    rank = d.groupby("pitcher_id").cumcount() + 1            # d is in date order: each pitcher's nth pitch of the season
+    rank = pd.Series(np.random.default_rng(SEED).random(len(d)), index=d.index).groupby(d.pitcher_id).rank(method="first")
     early = {n: {name: missed(fn, t, t) for name, fn in METHODS}
              for n, t in ((n, d[rank <= n]) for n in NS)}  # reused by confidence
 
