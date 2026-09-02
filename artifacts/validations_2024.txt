@@ -18,31 +18,31 @@ HELD-OUT ACCURACY (rmse, random 50/50 train/test split)
   fixed offset         13.37   13.68 (+0.23)     13.16   13.25 (+0.08)
   inferred             12.93   13.16 (+0.14)     12.67   12.76 (+0.11)
 
-FLATNESS (per pitcher median miss on the first n pitches of the season)
+FLATNESS (per pitcher median miss on n random pitches)
 ----------------------------------------------------------------
                           n=10        n=30       n=100       n=300      n=1000        full
   pitchers                 835         795         703         550         237         703
-  naive                  11.63       11.42       11.35       11.18       10.95       11.17
-  fixed offset            8.25        9.28        9.96       10.06        9.96       10.20
-  inferred                9.91        9.98        9.83        9.82        9.65        9.93
+  naive                  11.61       11.58       11.20       11.12       10.94       11.17
+  fixed offset            8.21        9.60        9.99       10.14        9.95       10.20
+  inferred                9.99       10.07        9.93        9.85        9.66        9.93
 
-CONFIDENCE INTERVAL (median miss calculated on the first n pitches of the season vs end of season)
+CONFIDENCE INTERVAL (median miss calculated on n random pitches vs end of season)
 ----------------------------------------------------------------
                               n=10      n=30     n=100     n=300    n=1000      full
   naive, pitchers              835       795       703       550       237       852
-    avg deviation             1.96      1.23      0.64      0.38      0.17      0.00
-    90%                       5.20      3.11      1.72      1.02      0.51      0.00
-    bias                      0.35      0.06      0.09      0.03     -0.00      0.00
+    avg deviation             1.91      1.09      0.54      0.26      0.12      0.00
+    90%                       4.85      2.85      1.45      0.76      0.33      0.00
+    bias                      0.15      0.09      0.01      0.02      0.00      0.00
 
   fixed offset, pitchers       835       795       703       550       237       852
-    avg deviation             2.33      1.21      0.61      0.32      0.12      0.00
-    90%                       5.27      2.85      1.44      0.85      0.41      0.00
-    bias                     -2.07     -0.86     -0.25     -0.10     -0.03      0.00
+    avg deviation             2.32      1.02      0.55      0.27      0.11      0.00
+    90%                       5.09      2.60      1.34      0.66      0.33      0.00
+    bias                     -2.07     -0.56     -0.20     -0.04     -0.01      0.00
 
   inferred, pitchers           835       795       703       550       237       852
-    avg deviation             1.59      0.89      0.49      0.26      0.10      0.00
-    90%                       3.96      2.33      1.21      0.73      0.32      0.00
-    bias                     -0.12     -0.03     -0.12     -0.04     -0.03      0.00
+    avg deviation             1.58      0.92      0.50      0.26      0.11      0.00
+    90%                       4.10      2.26      1.20      0.64      0.31      0.00
+    bias                     -0.10      0.09      0.01      0.02      0.00      0.00
 
 CORRELATIONS (Pearson, whole season, unweighted)
 ----------------------------------------------------------------
