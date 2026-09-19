@@ -204,25 +204,27 @@ def val_confidence(d, whole, early):
     return L
 
 
-def corr(x, y, control=None):
-    """Pearson correlation, with a control variable residualized out of both sides."""
+def corr(x, y, w, control=None):
+    """Pearson correlation weighted by w, with a control variable residualized out of both sides."""
     X = np.column_stack([x, y] if control is None else [x, y, control]).astype(float)
     if control is not None:
         z = np.column_stack([np.ones(len(X)), X[:, 2]])
-        X = X[:, :2] - z @ np.linalg.lstsq(z, X[:, :2], rcond=None)[0]
-    return float(np.corrcoef(X[:, 0], X[:, 1])[0, 1])
+        sw = np.sqrt(w)[:, None]
+        X = X[:, :2] - z @ np.linalg.lstsq(z * sw, X[:, :2] * sw, rcond=None)[0]
+    c = np.cov(X[:, 0], X[:, 1], aweights=w)
+    return float(c[0, 1] / np.sqrt(c[0, 0] * c[1, 1]))
 
 
-def corr_ci(x, y, control=None):
+def corr_ci(x, y, w, control=None):
     """Correlation plus a 95% percentile bootstrap interval."""
     idx = np.random.default_rng(SEED).integers(0, len(x), size=(N_BOOT, len(x)))
-    boot = [corr(x[i], y[i], None if control is None else control[i]) for i in idx]
-    return corr(x, y, control), *np.percentile(boot, [2.5, 97.5])
+    boot = [corr(x[i], y[i], w[i], None if control is None else control[i]) for i in idx]
+    return corr(x, y, w, control), *np.percentile(boot, [2.5, 97.5])
 
 
-def cell(x, y, control=None):
+def cell(x, y, w, control=None):
     """One table cell: correlation and interval."""
-    return "{:+.3f} [{:+.3f}, {:+.3f}]".format(*corr_ci(x, y, control))
+    return "{:+.3f} [{:+.3f}, {:+.3f}]".format(*corr_ci(x, y, w, control))
 
 
 def val_correlations(d, whole, fg, fg_next, season):
@@ -234,18 +236,19 @@ def val_correlations(d, whole, fg, fg_next, season):
     t = t[t.Pitches >= MIN_N_SEASON]        # pitches THROWN, so the pool does not move with coverage
     assert len(t) > 100, f"the Fangraphs join found only {len(t)} pitchers"
 
-    L = ["CORRELATIONS (Pearson, mean miss, whole season, unweighted)", "-" * 64,
+    L = ["CORRELATIONS (Pearson, mean miss, whole season, weighted by pitches thrown)", "-" * 64,
          f"  Min. {MIN_N_SEASON} pitches, N = {len(t)}", "",
          f"  {'':22s}" + "".join(f"{n:>26s}" for n, _ in METHODS)]
     for lab, col, ctrl in VALIDITY_ROWS:
         s = t.dropna(subset=[col] + ([ctrl] if ctrl else []))
         ctl = s[ctrl].to_numpy() if ctrl else None
-        L.append(f"  {lab:22s}" + "".join(f"{cell(s[n].to_numpy(), s[col].to_numpy(), ctl):>26}"
+        w = s.Pitches.to_numpy()
+        L.append(f"  {lab:22s}" + "".join(f"{cell(s[n].to_numpy(), s[col].to_numpy(), w, ctl):>26}"
                                           for n, _ in METHODS))
     s = t.dropna(subset=["sp_location", "BB%"])
     L += ["",
           f"  For reference, Location+ correlation to BB%: "
-          f"{cell(s['sp_location'].to_numpy(), s['BB%'].to_numpy())}",
+          f"{cell(s['sp_location'].to_numpy(), s['BB%'].to_numpy(), s.Pitches.to_numpy())}",
           ""]
 
     nxt = int(season) + 1
@@ -261,9 +264,10 @@ def val_correlations(d, whole, fg, fg_next, season):
         # predictors are all THIS season, so the control is what a forecaster would know today
         s = p.dropna(subset=[f"{col}_next", col] + ([ctrl] if ctrl else []))
         ctl, y = (s[ctrl].to_numpy() if ctrl else None), s[f"{col}_next"].to_numpy()
+        w = s.Pitches.to_numpy()
         L.append(f"  {f'next {lab}':22s}"
-                 + "".join(f"{cell(s[n].to_numpy(), y, ctl):>26}" for n, _ in METHODS)
-                 + f"{cell(s[col].to_numpy(), y, ctl):>26}")
+                 + "".join(f"{cell(s[n].to_numpy(), y, w, ctl):>26}" for n, _ in METHODS)
+                 + f"{cell(s[col].to_numpy(), y, w, ctl):>26}")
     L.append("")
     return L
 
