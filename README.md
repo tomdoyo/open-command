@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="artifacts/banner.png" alt="OpenCommand" width="100%">
+<img src="artifacts/banner.png" alt="Open Command" width="100%">
 
 [![Version](https://img.shields.io/badge/version-1.2.0-6E7681?style=for-the-badge&labelColor=24292F)](https://huggingface.co/datasets/tomdoyo/open-command)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-6E7681?style=for-the-badge&labelColor=24292F)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
@@ -12,7 +12,7 @@
 
 # Let's Measure Command
 
-[OpenCommand](https://x.com/open_command) measures **command** using the pitch location's distance from target.
+[Open Command](https://x.com/open_command) measures **command** using the pitch location's distance from target.
 
 This repo contains 2024/2025/2026 computer vision object detections and the full inference pipeline for producing **target estimates** and resulting **command scores**.
 
@@ -21,7 +21,7 @@ This repo contains 2024/2025/2026 computer vision object detections and the full
 </p>
 <p align="center"><sub>Tyler Rogers dots a backdoor sinker (TB @ TOR, 2026/05/13). <b>Yellow box:</b> broadcast strikezone detection. <b>Thin white circle:</b> catcher glove detection. <b>Thick white circle:</b> glove detection projected onto strikezone plane.</sub></p>
 
-OpenCommand is on par with the state-of-the-art command trackers, outperforming human-annotated trackers.  
+Open Command is on par with the state-of-the-art command trackers, outperforming human-annotated trackers.  
 It also predicts BB% better than BB% itself!
 
 <p align="center">
@@ -176,7 +176,7 @@ Raw detections (in `data/<year>/raw/`) are produced using YOLO11 glove/ball/stri
 
 ### Coverage
 
-OpenCommand tracks nearly all the pitches that it *can*, with most clips lost being due to *no strikezone detected*<sup>1</sup> and *late center field camera cut*<sup>2</sup>.
+Open Command tracks nearly all the pitches that it *can*, with most clips lost being due to *no strikezone detected*<sup>1</sup> and *late center field camera cut*<sup>2</sup>.
 
 **For 2025:** 90.00 / 93.17% possible
 
@@ -205,7 +205,7 @@ A nice feature is that you can tell where the pitcher was *trying* to throw, whi
 
 ### Results
 
-#### How good is OpenCommand?
+#### How good is Open Command?
 
 - *See [here](https://x.com/open_command/status/2094029112507859241) for visuals!*
 - Inferred miss stabilizes 10x faster than Location+.
@@ -213,12 +213,12 @@ A nice feature is that you can tell where the pitcher was *trying* to throw, whi
 - Inferred miss correlates to BB% nearly as well as Location+.
 - Inferred miss predicts rest-of-season BB% better than BB% itself until about 600 pitches.
 
-#### How close is OpenCommand to ground truth?
+#### How close is Open Command to ground truth?
 
-- OpenCommand is the [closest model to ground truth](https://x.com/open_command/status/2098417530427621640).
+- Open Command is the [closest model to ground truth](https://x.com/open_command/status/2098417530427621640).
 - True median miss for **fastballs** is probably [7 to 10 inches](https://x.com/tomdoyo/status/2082066794404294671).
 - Inferred miss assumes every pitcher perfectly calibrates his pitches, but most pitchers are probably an inch or two off. At the same time, most pitchers fine tune their targets (beyond the catcher's glove) every pitch, depending on the situation. Perhaps these two cancel off on a season-level. 
-- So, on a season-level, OpenCommand has a good chance of being accurate within <1 inch. On a pitch-level, certainly not. 
+- So, on a season-level, Open Command has a good chance of being accurate within <1 inch. On a pitch-level, certainly not. 
 
 #### How important is command?
 
@@ -258,6 +258,6 @@ A nice feature is that you can tell where the pitcher was *trying* to throw, whi
 
 ## License & citation
 
-Everything in this repository, data and code, is released under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/): use it, build on it, publish with it, with **attribution** (cite OpenCommand; see [CITATION.cff](CITATION.cff)) and **not commercially**. 
+Everything in this repository, data and code, is released under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/): use it, build on it, publish with it, with **attribution** (cite Open Command; see [CITATION.cff](CITATION.cff)) and **not commercially**. 
 
 Data derived from MLB broadcast video and Statcast public feeds. MLB and Statcast are trademarks of MLB Advanced Media, L.P.; this project is not affiliated with MLB.
