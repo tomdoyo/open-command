@@ -1,4 +1,4 @@
-"""Step 2 of the OpenCommand pipeline.
+"""Step 2 of the Open Command pipeline.
 
 Notes:
  - Glove plane is fixed to be y = -1.75ft (median catch depth)

@@ -1,4 +1,4 @@
-"""Step 4 of the OpenCommand pipeline.
+"""Step 4 of the Open Command pipeline.
 
 Functions:
  - val_median_miss:   median miss distance, pooled and per pitcher

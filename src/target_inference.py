@@ -1,4 +1,4 @@
-"""Step 3 of the OpenCommand pipeline.
+"""Step 3 of the Open Command pipeline.
 
 Notes:
  - Target detection takes the glove peak

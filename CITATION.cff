@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "If you use OpenCommand data or methods, please cite it as below."
-title: "OpenCommand: open catcher-target and pitcher-command data for MLB"
+message: "If you use Open Command data or methods, please cite it as below."
+title: "Open Command: open catcher-target and pitcher-command data for MLB"
 authors:
   - given-names: Tom
     family-names: Kim

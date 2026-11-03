@@ -1,4 +1,4 @@
-"""Step 1 of the OpenCommand pipeline.
+"""Step 1 of the Open Command pipeline.
 
 Notes:
  - Broadcast CF camera is a fixed mount (per game) that pans/tilts/zooms per pitch
